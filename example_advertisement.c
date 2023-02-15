@@ -110,10 +110,9 @@ static void on_ad_register_ready(GDBusProxy* proxy,
   if(error != NULL) {
     g_print("Error calling le_ad_proxy RegisterAdvertisement : %s\n", error->message);
     g_error_free(error);
-    // exit(1);
-  } else {
-    g_print("result: %s\n", g_variant_print(result, TRUE));
+    return ;
   }
+  g_print("result: %s\n", g_variant_print(result, TRUE));
   g_variant_unref(result);
 }
 
@@ -132,8 +131,6 @@ void register_advertisement(GDBusProxy *le_ad_proxy, gchar *advertisement) {
                          -1,
                          NULL,
                          (GAsyncReadyCallback)on_ad_register_ready, NULL);
-
-  g_variant_unref(parameters);
 }
 
 static void on_ad_unregister_ready(GDBusProxy* proxy,
@@ -146,10 +143,10 @@ static void on_ad_unregister_ready(GDBusProxy* proxy,
   if(error != NULL) {
     g_print("Error calling le_ad_proxy RegisterAdvertisement : %s\n", error->message);
     g_error_free(error);
-    // exit(1);
-  } else {
-    g_print("result: %s\n", g_variant_print(result, TRUE));
+    return ;
   }
+
+  g_print("result: %s\n", g_variant_print(result, TRUE));
   g_variant_unref(result);
 }
 
@@ -213,7 +210,6 @@ int main(int argc, char *argv[]) {
     g_error_free(error);
     exit(1);
   }
-
 
   GDBusProxy * le_ad_proxy = g_dbus_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM, 
                            G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
