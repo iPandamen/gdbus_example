@@ -15,6 +15,7 @@ all: example
 
 	${CC} -g -o gatt_server gatt_server.c ${CFLAGS} ${LDFLAGS} ${LIBS}
 	${CC} -g -o test test.c ${CFLAGS} ${LDFLAGS} ${LIBS}
+	${CC} -g -o test_advertisement test_advertisement.c ${CFLAGS} ${LDFLAGS} ${LIBS}
 	${CC} -g -o gdbus_gatt_battery_service gdbus_gatt_battery_service.c ${CFLAGS} ${LDFLAGS} ${LIBS}
 	# example
 	${CC} -g -o example_advertisement example_advertisement.c ${CFLAGS} ${LDFLAGS} ${LIBS}
@@ -24,5 +25,5 @@ example:
 
 clean:
 	${MAKE} -C ./example clean
-	# rm g_variant hostname_sync hostname_async signal_sync
+	-rm -f gatt_server test gdbus_gatt_battery_service example_advertisement test_advertisement
 

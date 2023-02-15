@@ -2,6 +2,10 @@
 #include <glib.h>
 #include <gio/gio.h>
 
+#include <stdio.h>
+#include <signal.h>
+
+#define AD_OBJECT_PATH  "/org/bluez/example/advertisement0"
 
 static GDBusNodeInfo *ad_introspection_data = NULL;
 static const gchar ad_introspection_xml[] =
@@ -34,55 +38,23 @@ static void handle_method_call (GDBusConnection       *connection,
 
   g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
 
-  if(g_strcmp0(object_path, "/org/bluez/BatteryService") == 0) {
-    if(g_strcmp0(interface_name, "org.freedesktop.DBus.ObjectManager") == 0) {
-      if(g_strcmp0(method_name, "GetManagedObjects") == 0) {
-        GVariant *variant = NULL;
-        gchar variant_string[] = 
-          "({"
-          "  objectpath '/org/bluez/example/service0': { "
-          "    'org.bluez.GattService1': { "
-          "      'UUID': <'0000180d-0000-1000-8000-00805f9b34fb'>, "
-          "      'Primary': <true>, "
-          "      'Characteristics': <['/org/bluez/example/service0/char0', '/org/bluez/example/service0/char1','/org/bluez/example/service0/char2']>"
-          "    }"
-          "  }, "
-          "  objectpath '/org/bluez/example/service0/char0': { "
-          "    'org.bluez.GattCharacteristic1': {"
-          "      'Service': <'/org/bluez/example/service0'>, "
-          "      'UUID': <'00002a37-0000-1000-8000-00805f9b34fb'>, "
-          "      'Flags': <['notify']>, "
-          "      'Descriptors': <@as []>"
-          "    } "
-          "  },"
-          "  objectpath '/org/bluez/example/service0/char1': {"
-          "    'org.bluez.GattCharacteristic1': {"
-          "      'Service': <'/org/bluez/example/service0'>, "
-          "      'UUID': <'00002a38-0000-1000-8000-00805f9b34fb'>, "
-          "      'Flags': <['read']>, "
-          "      'Descriptors': <@as []>"
-          "    }"
-          "  }, "
-          "  objectpath '/org/bluez/example/service0/char2': {"
-          "    'org.bluez.GattCharacteristic1': {"
-          "      'Service': <'/org/bluez/example/service0'>, "
-          "      'UUID': <'00002a39-0000-1000-8000-00805f9b34fb'>, "
-          "      'Flags': <['write']>, "
-          "      'Descriptors': <@as []>"
-          "    }"
-          "  }"
-          "},)";
-        variant = g_variant_new_parsed(variant_string);
-        g_print("variant: %s\n", g_variant_print(variant, TRUE));
-        g_dbus_method_invocation_return_value(invocation, variant);
-        // g_variant_unref(variant);
-      }
+  if(g_strcmp0(interface_name, "org.freedesktop.DBus.Properties") == 0) {
+    if(g_strcmp0(method_name, "GetAll") == 0) {
+      GVariant *variant = NULL;
+      gchar string[] = 
+        "({"
+        "  'Type': <'peripheral'>, "
+        "  'ServiceUUIDs': <['180D', '180F']>, "
+        "  'LocalName': <'TestAdvertisement'>, "
+        "  'Includes': <['tx-power']>"
+        "},)";
+      variant = g_variant_new_parsed(string);
+      g_print("variant: %s\n", g_variant_print(variant, TRUE));
+      g_dbus_method_invocation_return_value(invocation, variant);
     }
   }
 }
 
-
-static gchar *_global_title = NULL;
 
 GVariant *handle_get_property (GDBusConnection       *connection,
                                                     const gchar           *sender,
@@ -103,13 +75,6 @@ GVariant *handle_get_property (GDBusConnection       *connection,
       ret = g_variant_new_boolean(TRUE);
     }
   }
-
-  if(g_strcmp0(property_name, "Title") == 0) {
-    if(_global_title == NULL) {
-      _global_title = g_strdup("Back To C!");
-    }
-    ret = g_variant_new_string(_global_title);
-  }
   return ret;
 }
 
@@ -123,34 +88,9 @@ gboolean  handle_set_property (GDBusConnection       *connection,
                                                     gpointer               user_data) {
 
   g_print("sender: %s, object_path: %s, interface_name: %s, property_name: %s\n", sender, object_path, interface_name, property_name);
-  if(g_strcmp0(property_name, "Title") == 0) {
-    if(g_strcmp0(_global_title, g_variant_get_string(value, NULL)) != 0) {
-      GVariantBuilder *builder;
-      GError *local_error;
-
-      g_free(_global_title);
-      _global_title = g_variant_dup_string(value, NULL);
-
-      local_error = NULL;
-      builder = g_variant_builder_new(G_VARIANT_TYPE_ARRAY);
-      g_variant_builder_add(builder, "{sv}", "Title", g_variant_new_string(_global_title));
-      g_dbus_connection_emit_signal(
-                                    connection, 
-                                    NULL, 
-                                    object_path, 
-                                    "org.freedesktop.DBus.Properties", 
-                                    "PropertiesChanaged", 
-                                    g_variant_new("(sa{sv}as)", interface_name, builder, NULL), 
-                                    &local_error);
-      g_assert_no_error(local_error);
-    }
-  }
 
   return *error == NULL;
 }
-
-
-
 
 GDBusInterfaceVTable ad_interface_table = {
   handle_method_call,
@@ -159,10 +99,90 @@ GDBusInterfaceVTable ad_interface_table = {
   {0}
 };
 
-int main(int argc, char *argv[]) {
+
+static void on_ad_register_ready(GDBusProxy* proxy,
+				     GAsyncResult *res,
+             gpointer user_data) {
 
   GError *error = NULL;
-  GMainLoop *loop;
+  GVariant *result = g_dbus_proxy_call_finish(proxy, res, &error);
+
+  if(error != NULL) {
+    g_print("Error calling le_ad_proxy RegisterAdvertisement : %s\n", error->message);
+    g_error_free(error);
+    // exit(1);
+  } else {
+    g_print("result: %s\n", g_variant_print(result, TRUE));
+  }
+  g_variant_unref(result);
+}
+
+
+void register_advertisement(GDBusProxy *le_ad_proxy, gchar *advertisement) {
+
+  GError * error = NULL;
+  GVariant *parameters = NULL;
+
+  parameters = g_variant_new("(oa{sv})", advertisement, NULL);
+  g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
+
+  g_dbus_proxy_call(le_ad_proxy, "RegisterAdvertisement",
+                         parameters,
+                         G_DBUS_CALL_FLAGS_NONE,
+                         -1,
+                         NULL,
+                         (GAsyncReadyCallback)on_ad_register_ready, NULL);
+
+  g_variant_unref(parameters);
+}
+
+static void on_ad_unregister_ready(GDBusProxy* proxy,
+				     GAsyncResult *res,
+             gpointer user_data) {
+
+  GError *error = NULL;
+  GVariant *result = g_dbus_proxy_call_finish(proxy, res, &error);
+
+  if(error != NULL) {
+    g_print("Error calling le_ad_proxy RegisterAdvertisement : %s\n", error->message);
+    g_error_free(error);
+    // exit(1);
+  } else {
+    g_print("result: %s\n", g_variant_print(result, TRUE));
+  }
+  g_variant_unref(result);
+}
+
+void unregister_advertisement(GDBusProxy *le_ad_proxy, gchar *advertisement) {
+
+  GError * error = NULL;
+  GVariant *parameters = NULL;
+
+  parameters = g_variant_new("(o)", advertisement);
+  g_dbus_proxy_call(le_ad_proxy, "UnregisterAdvertisement",
+                         parameters,
+                         G_DBUS_CALL_FLAGS_NONE,
+                         -1,
+                         NULL,
+                         (GAsyncReadyCallback)on_ad_unregister_ready, 
+                         NULL);
+
+  g_variant_unref(parameters);
+}
+
+GMainLoop *main_loop = NULL;
+
+void on_signal_sigint (int signal) {
+
+  printf("--------------------------------> Get SIGINT signal!\n");
+  g_main_loop_quit(main_loop);
+}
+
+int main(int argc, char *argv[]) {
+
+  signal(SIGINT, on_signal_sigint);
+
+  GError *error = NULL;
   GDBusConnection *connection;
 
   connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
@@ -171,21 +191,23 @@ int main(int argc, char *argv[]) {
     g_error_free(error);
     exit(1);
   }
+  g_print("unique name: %s\n", g_dbus_connection_get_unique_name(connection));
 
   ad_introspection_data = g_dbus_node_info_new_for_xml(ad_introspection_xml, &error);
   if(error != NULL) {
-    g_print("Error get  ad node info: %s\n", error->message);
+    g_print("Error get ad node info: %s\n", error->message);
     g_error_free(error);
     exit(1);
   }
 
-  g_dbus_connection_register_object(connection, 
-                                    "/org/bluez/example/advertisement0",
+  guint registeration_id = g_dbus_connection_register_object(connection, 
+                                    AD_OBJECT_PATH,
                                     ad_introspection_data->interfaces[0],
                                     &ad_interface_table, 
                                     NULL,
                                     NULL,
                                     &error);
+
   if(error != NULL) {
     g_print("Error registering object: %s\n", error->message);
     g_error_free(error);
@@ -193,11 +215,28 @@ int main(int argc, char *argv[]) {
   }
 
 
+  GDBusProxy * le_ad_proxy = g_dbus_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM, 
+                           G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                           NULL, 
+                           "org.bluez",
+                           "/org/bluez/hci0",
+                           "org.bluez.LEAdvertisingManager1",
+                           NULL, 
+                           &error);
+  if(error != NULL) {
+    g_print("Error get dubs proxy: %s\n", error->message);
+    g_error_free(error);
+    exit(1);
+  }
 
-  g_print("unique name: %s\n", g_dbus_connection_get_unique_name(connection));
+  unregister_advertisement(le_ad_proxy, AD_OBJECT_PATH);
+  register_advertisement(le_ad_proxy, AD_OBJECT_PATH );
+  main_loop = g_main_loop_new(NULL, FALSE);
+  g_main_loop_run(main_loop);
 
-  loop = g_main_loop_new(NULL, FALSE);
-  g_main_loop_run(loop);
+  unregister_advertisement(le_ad_proxy, AD_OBJECT_PATH);
+  g_dbus_connection_unregister_object(connection, registeration_id);
+  g_object_unref(connection);
 
   return 0;
 }
