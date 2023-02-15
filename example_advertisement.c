@@ -229,7 +229,6 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  unregister_advertisement(le_ad_proxy, AD_OBJECT_PATH);
   register_advertisement(le_ad_proxy, AD_OBJECT_PATH );
   main_loop = g_main_loop_new(NULL, FALSE);
   g_main_loop_run(main_loop);
