@@ -19,11 +19,12 @@ all: example
 	${CC} -g -o gdbus_gatt_battery_service gdbus_gatt_battery_service.c ${CFLAGS} ${LDFLAGS} ${LIBS}
 	# example
 	${CC} -g -o example_advertisement example_advertisement.c ${CFLAGS} ${LDFLAGS} ${LIBS}
+	${CC} -g -o example_gatt_service example_gatt_service.c ${CFLAGS} ${LDFLAGS} ${LIBS}
 
 example:
 	${MAKE} -C ./example
 
 clean:
 	${MAKE} -C ./example clean
-	-rm -f gatt_server test gdbus_gatt_battery_service example_advertisement test_advertisement
+	-rm -f gatt_server test gdbus_gatt_battery_service example_advertisement example_gatt_service test_advertisement
 

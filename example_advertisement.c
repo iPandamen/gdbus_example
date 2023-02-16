@@ -28,13 +28,13 @@ static const gchar ad_introspection_xml[] =
   "</node>";
 
 static void handle_method_call (GDBusConnection       *connection,
-                                              const gchar           *sender,
-                                              const gchar           *object_path,
-                                              const gchar           *interface_name,
-                                              const gchar           *method_name,
-                                              GVariant              *parameters,
-                                              GDBusMethodInvocation *invocation,
-                                              gpointer               user_data) {
+                                const gchar           *sender,
+                                const gchar           *object_path,
+                                const gchar           *interface_name,
+                                const gchar           *method_name,
+                                GVariant              *parameters,
+                                GDBusMethodInvocation *invocation,
+                                gpointer               user_data) {
 
   g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
 
@@ -57,12 +57,12 @@ static void handle_method_call (GDBusConnection       *connection,
 
 
 GVariant *handle_get_property (GDBusConnection       *connection,
-                                                    const gchar           *sender,
-                                                    const gchar           *object_path,
-                                                    const gchar           *interface_name,
-                                                    const gchar           *property_name,
-                                                    GError               **error,
-                                                    gpointer               user_data) {
+                               const gchar           *sender,
+                               const gchar           *object_path,
+                               const gchar           *interface_name,
+                               const gchar           *property_name,
+                               GError               **error,
+                               gpointer               user_data) {
 
   g_print("sender: %s, object_path: %s, interface_name: %s, property_name: %s\n", sender, object_path, interface_name, property_name);
 
@@ -79,13 +79,13 @@ GVariant *handle_get_property (GDBusConnection       *connection,
 }
 
 gboolean  handle_set_property (GDBusConnection       *connection,
-                                                    const gchar           *sender,
-                                                    const gchar           *object_path,
-                                                    const gchar           *interface_name,
-                                                    const gchar           *property_name,
-                                                    GVariant              *value,
-                                                    GError               **error,
-                                                    gpointer               user_data) {
+                               const gchar           *sender,
+                               const gchar           *object_path,
+                               const gchar           *interface_name,
+                               const gchar           *property_name,
+                               GVariant              *value,
+                               GError               **error,
+                               gpointer               user_data) {
 
   g_print("sender: %s, object_path: %s, interface_name: %s, property_name: %s\n", sender, object_path, interface_name, property_name);
 
@@ -101,8 +101,8 @@ GDBusInterfaceVTable ad_interface_table = {
 
 
 static void on_ad_register_ready(GDBusProxy* proxy,
-				     GAsyncResult *res,
-             gpointer user_data) {
+                                 GAsyncResult *res,
+                                 gpointer user_data) {
 
   GError *error = NULL;
   GVariant *result = g_dbus_proxy_call_finish(proxy, res, &error);
@@ -126,16 +126,16 @@ void register_advertisement(GDBusProxy *le_ad_proxy, gchar *advertisement) {
   g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
 
   g_dbus_proxy_call(le_ad_proxy, "RegisterAdvertisement",
-                         parameters,
-                         G_DBUS_CALL_FLAGS_NONE,
-                         -1,
-                         NULL,
-                         (GAsyncReadyCallback)on_ad_register_ready, NULL);
+                    parameters,
+                    G_DBUS_CALL_FLAGS_NONE,
+                    -1,
+                    NULL,
+                    (GAsyncReadyCallback)on_ad_register_ready, NULL);
 }
 
 static void on_ad_unregister_ready(GDBusProxy* proxy,
-				     GAsyncResult *res,
-             gpointer user_data) {
+                                   GAsyncResult *res,
+                                   gpointer user_data) {
 
   GError *error = NULL;
   GVariant *result = g_dbus_proxy_call_finish(proxy, res, &error);
@@ -157,12 +157,12 @@ void unregister_advertisement(GDBusProxy *le_ad_proxy, gchar *advertisement) {
 
   parameters = g_variant_new("(o)", advertisement);
   g_dbus_proxy_call(le_ad_proxy, "UnregisterAdvertisement",
-                         parameters,
-                         G_DBUS_CALL_FLAGS_NONE,
-                         -1,
-                         NULL,
-                         (GAsyncReadyCallback)on_ad_unregister_ready, 
-                         NULL);
+                    parameters,
+                    G_DBUS_CALL_FLAGS_NONE,
+                    -1,
+                    NULL,
+                    (GAsyncReadyCallback)on_ad_unregister_ready, 
+                    NULL);
 
   g_variant_unref(parameters);
 }
@@ -198,12 +198,12 @@ int main(int argc, char *argv[]) {
   }
 
   guint registeration_id = g_dbus_connection_register_object(connection, 
-                                    AD_OBJECT_PATH,
-                                    ad_introspection_data->interfaces[0],
-                                    &ad_interface_table, 
-                                    NULL,
-                                    NULL,
-                                    &error);
+                                                             AD_OBJECT_PATH,
+                                                             ad_introspection_data->interfaces[0],
+                                                             &ad_interface_table, 
+                                                             NULL,
+                                                             NULL,
+                                                             &error);
 
   if(error != NULL) {
     g_print("Error registering object: %s\n", error->message);
@@ -212,13 +212,13 @@ int main(int argc, char *argv[]) {
   }
 
   GDBusProxy * le_ad_proxy = g_dbus_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM, 
-                           G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
-                           NULL, 
-                           "org.bluez",
-                           "/org/bluez/hci0",
-                           "org.bluez.LEAdvertisingManager1",
-                           NULL, 
-                           &error);
+                                                           G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
+                                                           NULL, 
+                                                           "org.bluez",
+                                                           "/org/bluez/hci0",
+                                                           "org.bluez.LEAdvertisingManager1",
+                                                           NULL, 
+                                                           &error);
   if(error != NULL) {
     g_print("Error get dubs proxy: %s\n", error->message);
     g_error_free(error);
