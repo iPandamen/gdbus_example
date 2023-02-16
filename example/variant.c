@@ -164,6 +164,13 @@ int main(int argc, char *argv[]) {
   array_type_test();
   maybe_type_test();
   parsed_test();
+
+  GVariant *variant = g_variant_new_parsed("( @ay [ 0x01 ] ,  )");
+  g_print("\n variant: %s\n", g_variant_print(variant, TRUE));
+  g_variant_unref(variant);
+
+
+
   return 0;
 }
 

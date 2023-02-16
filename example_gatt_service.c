@@ -90,6 +90,38 @@ gchar desc_introspection_xml[] =
   "  </interface>"
   "</node>";
 
+
+gboolean is_notify = FALSE;
+gboolean hr_source_func(gpointer user_data) {
+
+  printf("-------- %s\n", __FUNCTION__);
+  if(is_notify) {
+
+    GRand *rand = g_rand_new_with_seed(g_get_real_time());
+    guint16 val = g_rand_int_range(rand, 0, 0xFFFF);
+
+    GVariant *variant = g_variant_new_parsed("('org.bluez.GattCharacteristic1', {'Value': <@ay [%y, %y, %y]>}, @as [])", 0x06, val & 0xFF, val >> 8);
+    g_print("---- hr_source_func variant: %s\n", g_variant_print(variant, TRUE));
+
+    GError *error = NULL;
+    g_dbus_connection_emit_signal(connection, 
+                                  NULL, 
+                                  APP_OBJECT_PATH "/service0/char0", 
+                                  // "org.bluez.GattCharacteristic1",
+                                  "org.freedesktop.DBus.Properties",
+                                  "PropertiesChanged", 
+                                  variant, 
+                                  &error);
+    if(error != NULL) {
+      fprintf(stderr, "Error emitting PropertiesChanged: %s\n", error->message);
+      g_error_free(error);
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+}
+
 static void handle_method_call (GDBusConnection       *connection,
                                 const gchar           *sender,
                                 const gchar           *object_path,
@@ -101,58 +133,73 @@ static void handle_method_call (GDBusConnection       *connection,
 
   g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
 
-  if(g_strcmp0(interface_name, "org.freedesktop.DBus.ObjectManager") == 0) {
-    if(g_strcmp0(method_name, "GetManagedObjects") == 0) {
-      GVariant *variant = NULL;
-      gchar string[] = 
-        "({"
-        "  objectpath '/org/bluez/example/app0/service0': {"
-        "    'org.bluez.GattService1': { "
-        "      'UUID': <'0000180d-0000-1000-8000-00805f9b34fb'>,"
-        "      'Primary': <true>,"
-        "      'Characteristics': <['/org/bluez/example/app0/service0/char0', '/org/bluez/example/app0/service0/char1', '/org/bluez/example/app0/service0/char2']>"
-        "    }"
-        "  },"
-        "  objectpath '/org/bluez/example/app0/service0/char0': {"
-        "    'org.bluez.GattCharacteristic1': { "
-        "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-        "      'UUID': <'00002a37-0000-1000-8000-00805f9b34fb'>,"
-        "      'Flags': <['notify']>,"
-        "      'Descriptors': <@ao []>"
-        "    }"
-        "  },"
-        "  objectpath '/org/bluez/example/app0/service0/char1': {"
-        "    'org.bluez.GattCharacteristic1': { "
-        "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-        "      'UUID': <'00002a38-0000-1000-8000-00805f9b34fb'>,"
-        "      'Flags': <['read']>,"
-        "      'Descriptors': <@ao []>"
-        "    }"
-        "  },"
-        "  objectpath '/org/bluez/example/app0/service0/char2': {"
-        "    'org.bluez.GattCharacteristic1': { "
-        "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-        "      'UUID': <'00002a39-0000-1000-8000-00805f9b34fb'>,"
-        "      'Flags': <['write']>,"
-        "      'Descriptors': <@ao []>"
-        "    }"
-        "  }"
-        "},)";
-      variant = g_variant_new_parsed(string);
-      g_print("variant: %s\n", g_variant_print(variant, TRUE));
-      g_dbus_method_invocation_return_value(invocation, variant);
+  if(g_strcmp0(object_path, APP_OBJECT_PATH) == 0) {
+    if(g_strcmp0(interface_name, "org.freedesktop.DBus.ObjectManager") == 0) {
+      if(g_strcmp0(method_name, "GetManagedObjects") == 0) {
+        GVariant *variant = NULL;
+        gchar string[] = 
+          "({"
+          "  objectpath '/org/bluez/example/app0/service0': {"
+          "    'org.bluez.GattService1': { "
+          "      'UUID': <'0000180d-0000-1000-8000-00805f9b34fb'>,"
+          "      'Primary': <true>,"
+          "      'Characteristics': <['/org/bluez/example/app0/service0/char0', '/org/bluez/example/app0/service0/char1', '/org/bluez/example/app0/service0/char2']>"
+          "    }"
+          "  },"
+          "  objectpath '/org/bluez/example/app0/service0/char0': {"
+          "    'org.bluez.GattCharacteristic1': { "
+          "      'Service': <@o '/org/bluez/example/app0/service0'>,"
+          "      'UUID': <'00002a37-0000-1000-8000-00805f9b34fb'>,"
+          "      'Flags': <['notify']>,"
+          "      'Descriptors': <@ao []>"
+          "    }"
+          "  },"
+          "  objectpath '/org/bluez/example/app0/service0/char1': {"
+          "    'org.bluez.GattCharacteristic1': { "
+          "      'Service': <@o '/org/bluez/example/app0/service0'>,"
+          "      'UUID': <'00002a38-0000-1000-8000-00805f9b34fb'>,"
+          "      'Flags': <['read']>,"
+          "      'Descriptors': <@ao []>"
+          "    }"
+          "  },"
+          "  objectpath '/org/bluez/example/app0/service0/char2': {"
+          "    'org.bluez.GattCharacteristic1': { "
+          "      'Service': <@o '/org/bluez/example/app0/service0'>,"
+          "      'UUID': <'00002a39-0000-1000-8000-00805f9b34fb'>,"
+          "      'Flags': <['write']>,"
+          "      'Descriptors': <@ao []>"
+          "    }"
+          "  }"
+          "},)";
+        variant = g_variant_new_parsed(string);
+        g_print("variant: %s\n", g_variant_print(variant, TRUE));
+        g_dbus_method_invocation_return_value(invocation, variant);
+      }
     }
   } else if(g_strcmp0(object_path, APP_OBJECT_PATH "/service0") == 0) {
 
   } else if(g_strcmp0(object_path, APP_OBJECT_PATH "/service0/char0") == 0) {
 
+    if(g_strcmp0(method_name, "StartNotify") == 0) {
+      is_notify = TRUE;
+      g_dbus_method_invocation_return_value(invocation, g_variant_new_parsed("()"));
+    } else if(g_strcmp0(method_name, "StopNotify") == 0) {
+      is_notify = FALSE;
+      g_dbus_method_invocation_return_value(invocation, g_variant_new_parsed("()"));
+    }
+
   } else if(g_strcmp0(object_path, APP_OBJECT_PATH "/service0/char1") == 0) {
+
     if(g_strcmp0(method_name, "ReadValue") == 0) {
-      GVariant *variant = g_variant_new_parsed("[ 0x01 ]");
+      GVariant *variant = g_variant_new_parsed("(@ay [ 0x01 ], )");
       g_dbus_method_invocation_return_value(invocation, variant);
     }
   } else if(g_strcmp0(object_path, APP_OBJECT_PATH "/service0/char2") == 0) {
+    if(g_strcmp0(method_name, "WriteValue") == 0) {
 
+      g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
+      g_dbus_method_invocation_return_value(invocation, g_variant_new_parsed("()"));
+    }
   }
 }
 
@@ -411,6 +458,8 @@ int main(int argc, char* argv[]) {
     g_error_free(error);
     raise(SIGINT);
   }
+
+  g_timeout_add_seconds(1, hr_source_func, NULL);
 
   register_application(gatt_manager_proxy, APP_OBJECT_PATH);
   g_main_loop_run(main_loop);
