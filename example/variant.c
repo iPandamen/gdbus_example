@@ -155,7 +155,34 @@ void parsed_test(void) {
   g_variant_unref(variant);
 }
 
+void get_value_test(void) {
 
+  printf("\n-------- %s --------\n", __FUNCTION__);
+  GVariant *variant = g_variant_new_parsed("( @ay [ 0x01 ] ,  )");
+  g_print("\nvariant: %s\n", g_variant_print(variant, TRUE));
+  g_variant_unref(variant);
+
+  gchar *string_0 =
+    "([byte 0x11, 0x11], {'device': <objectpath '/org/bluez/hci0/dev_CF_CB_48_D9_2E_15'>, 'link': <'LE'>, 'mtu': <uint16 247>})";
+  GVariant* variant_0 = g_variant_new_parsed(string_0);
+
+  g_print("variant_0: %s\n", g_variant_print(variant_0, TRUE));
+
+  GVariant* variant_1;
+  g_variant_get(variant_0, "(@ay@a{sv})", &variant_1, NULL);
+  g_print("variant_1: %s\n", g_variant_print(variant_1, TRUE));
+
+  GVariantIter *iter;
+  g_variant_get(variant_1, "ay", &iter);
+  guchar val;
+  while(g_variant_iter_loop(iter, "y", &val)) {
+    g_print("%d\n", val);
+  }
+  g_variant_iter_free(iter);
+
+  g_variant_unref(variant_1);
+  g_variant_unref(variant_0);
+}
 
 int main(int argc, char *argv[]) {
 
@@ -165,12 +192,7 @@ int main(int argc, char *argv[]) {
   maybe_type_test();
   parsed_test();
 
-  GVariant *variant = g_variant_new_parsed("( @ay [ 0x01 ] ,  )");
-  g_print("\n variant: %s\n", g_variant_print(variant, TRUE));
-  g_variant_unref(variant);
-
-
-
+  get_value_test();
   return 0;
 }
 
