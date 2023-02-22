@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <glib-object.h>
+#include <glib.h>
 #include <gio/gio.h>
 
 void numeric_type_test(void) {
@@ -184,6 +184,29 @@ void get_value_test(void) {
   g_variant_unref(variant_0);
 }
 
+void construct_value_test(void) {
+
+  printf("\n-------- %s --------\n", __FUNCTION__);
+  const char *ptr = NULL;
+  const guchar str[]  = "HodgeCode";
+
+  GVariantBuilder array_builder;
+
+  ptr = str;
+  g_variant_builder_init(&array_builder, G_VARIANT_TYPE_ARRAY);
+  while(*ptr != '\0') {
+    g_variant_builder_add(&array_builder, "y", *str);
+    ptr++;
+  }
+  GVariant * array_variant = g_variant_builder_end(&array_builder);
+  g_print("array variant: %s\n", g_variant_print(array_variant, TRUE));
+
+  GVariant *variant = g_variant_new("(@ay)", array_variant);
+  g_print("variant: %s\n", g_variant_print(array_variant, TRUE));
+  g_variant_unref(variant);
+}
+
+
 int main(int argc, char *argv[]) {
 
   numeric_type_test();
@@ -193,6 +216,9 @@ int main(int argc, char *argv[]) {
   parsed_test();
 
   get_value_test();
+
+  construct_value_test();
+
   return 0;
 }
 
