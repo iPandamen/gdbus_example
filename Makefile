@@ -1,23 +1,27 @@
 
 
 ifeq (${ARCH}, arm)
-
 CC = arm-linux-gnueabihf-gcc
 CFLAGS = $(shell pkg-config --cflags glib-2.0 gio-2.0)
 LDFLAGS = -L/home/asd/WorkSpace/nfs_rootfs/rootfs/usr/lib -lffi -lpcre -lz -lgmodule-2.0
 LIBS = $(shell pkg-config --libs-only-l glib-2.0 gio-2.0)
 else 
-
 CC = gcc
 CFLAGS = $(shell pkg-config --cflags glib-2.0 gio-2.0)
 LDFLAGS = $(shell pkg-config --libs-only-L glib-2.0 gio-2.0)
 LIBS = $(shell pkg-config --libs-only-l glib-2.0 gio-2.0)
 endif 
 
+export CC
+export CFLAGS
+export LDFLAGS
+export LIBS
 
-.PHONY: all example clean
+.PHONY: all test example clean
 
-all: example
+all: test example
+
+test:
 	echo CFLAGS: ${CFLAGS}
 	echo LDFLAGS: ${LDFALGS}
 	echo LIBS: ${LIBS}

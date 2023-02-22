@@ -1,9 +1,9 @@
 
-CC = gcc
+CC ?= gcc
 
-CFLAGS = $(shell pkg-config --cflags glib-2.0 gio-2.0)
-LDFLAGS = $(shell pkg-config --libs-only-L glib-2.0 gio-2.0)
-LIBS = $(shell pkg-config --libs-only-l glib-2.0 gio-2.0)
+# CFLAGS = $(shell pkg-config --cflags glib-2.0 gio-2.0)
+# LDFLAGS = $(shell pkg-config --libs-only-L glib-2.0 gio-2.0)
+# LIBS = $(shell pkg-config --libs-only-l glib-2.0 gio-2.0)
 
 C_SRCS = $(wildcard *.c)
 C_OBJS = ${C_SRCS:.c=.o}
@@ -23,11 +23,14 @@ before:
 
 after:
 
-${C_BINS}: ${C_OBJS}
-	${CC} -g $@.o -o $@ ${CFLAGS} ${LDFLAGS} ${LIBS}
+${C_BINS}: 
+	${CC} -g $@.c -o $@ ${CFLAGS} ${LDFLAGS} ${LIBS}
 
-%.o: %.c
-	${CC} -g -c $< -o $@ ${CFLAGS} ${LDFLAGS} ${LIBS}
+# ${C_BINS}: ${C_OBJS}
+#   ${CC} -g $@.o -o $@ ${CFLAGS} ${LDFLAGS} ${LIBS}
+
+# %.o: %.c
+#   ${CC} -g -c $< -o $@ ${CFLAGS} ${LDFLAGS} ${LIBS}
 
 clean:
 	-rm -f ${C_OBJS} ${C_BINS}
