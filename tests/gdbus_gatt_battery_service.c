@@ -276,7 +276,6 @@ int main(int argc, char *argv[]) {
 
   register_service_object(conn);
 
-
   loop = g_main_loop_new(NULL, FALSE);
   g_main_loop_run(loop);
 

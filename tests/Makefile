@@ -9,20 +9,20 @@ C_OBJS = ${C_SRCS:.c=.o}
 C_BINS = ${C_OBJS:.o=}
 
 ifdef BUILD_DIR
-example_BUILD_DIR=${BUILD_DIR}/example
+tests_BUILD_DIR=${BUILD_DIR}/tests
 else 
-example_BUILD_DIR=${CURDIR}/build
+tests_BUILD_DIR=${CURDIR}/build
 endif
 
-.PHONY:  all before ${C_BINS} after clean
+.PHONY: all before ${C_BINS} after clean
 
 all: before ${C_BINS} after
 
 before:
-	if [ ! -d ${example_BUILD_DIR} ]; then mkdir ${example_BUILD_DIR}; fi
+	if [ ! -d ${tests_BUILD_DIR} ]; then mkdir ${tests_BUILD_DIR}; fi
 
 after:
-	cp ${C_BINS} ${example_BUILD_DIR}
+	cp ${C_BINS} ${tests_BUILD_DIR}
 
 ${C_BINS}: ${C_OBJS}
 	${CC} -g $@.o -o $@ ${CFLAGS} ${LDFLAGS} ${LIBS}
@@ -32,6 +32,7 @@ ${C_BINS}: ${C_OBJS}
 
 clean:
 	${RM} ${C_OBJS} ${C_BINS}
-	${RM} -r ${example_BUILD_DIR}
+	${RM} -r ${tests_BUILD_DIR}
+
 
 

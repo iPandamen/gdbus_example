@@ -1,42 +1,44 @@
 
-
 ifeq (${ARCH}, arm)
 CC = arm-linux-gnueabihf-gcc
 CFLAGS = $(shell pkg-config --cflags glib-2.0 gio-2.0)
 LDFLAGS = -L/home/asd/WorkSpace/nfs_rootfs/rootfs/usr/lib -lffi -lpcre -lz -lgmodule-2.0
 LIBS = $(shell pkg-config --libs-only-l glib-2.0 gio-2.0)
+BUILD_DIR=${CURDIR}/build_for_arm/
 else 
 CC = gcc
 CFLAGS = $(shell pkg-config --cflags glib-2.0 gio-2.0)
 LDFLAGS = $(shell pkg-config --libs-only-L glib-2.0 gio-2.0)
 LIBS = $(shell pkg-config --libs-only-l glib-2.0 gio-2.0)
+BUILD_DIR=${CURDIR}/build
 endif 
+
 
 export CC
 export CFLAGS
 export LDFLAGS
 export LIBS
+export BUILD_DIR
 
-.PHONY: all test example clean
+.PHONY: all before tests example after clean
 
-all: test example
+all: before build after
 
-test:
-	echo CFLAGS: ${CFLAGS}
-	echo LDFLAGS: ${LDFALGS}
-	echo LIBS: ${LIBS}
+before:
+	if [ ! -d ${BUILD_DIR} ]; then mkdir ${BUILD_DIR}; fi
 
-	${CC} -g -o gatt_server gatt_server.c ${CFLAGS} ${LDFLAGS} ${LIBS}
-	${CC} -g -o test test.c ${CFLAGS} ${LDFLAGS} ${LIBS}
-	${CC} -g -o test_advertisement test_advertisement.c ${CFLAGS} ${LDFLAGS} ${LIBS}
-	${CC} -g -o gdbus_gatt_battery_service gdbus_gatt_battery_service.c ${CFLAGS} ${LDFLAGS} ${LIBS}
-	# example
-	${CC} -g -o example_advertisement example_advertisement.c ${CFLAGS} ${LDFLAGS} ${LIBS}
+after:
+
+build: tests example
+
+tests:
+	${MAKE} -C ./tests
 
 example:
 	${MAKE} -C ./example
 
 clean:
+	${MAKE} -C ./tests clean
 	${MAKE} -C ./example clean
-	-rm  gatt_server test gdbus_gatt_battery_service example_advertisement test_advertisement
+	${RM} -r ${BUILD_DIR}
 
