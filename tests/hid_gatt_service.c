@@ -99,6 +99,7 @@ static void app_method_call (GDBusConnection       *connection,
                                 GVariant              *parameters,
                                 GDBusMethodInvocation *invocation,
                                 gpointer               user_data) {
+  g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
 
   if(g_str_equal(object_path, APP_OBJECT_PATH)) {
     if(g_str_equal(interface_name, "org.freedesktop.DBus.ObjectManager")) {
@@ -108,7 +109,7 @@ static void app_method_call (GDBusConnection       *connection,
           "({"
           "  objectpath '/org/bluez/example/app0/service0': {"
           "    'org.bluez.GattService1': { "
-          "      'UUID': <'00001812-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'1812'>,"
           "      'Primary': <true>,"
           "      'Characteristics': <['/org/bluez/example/app0/service0/char0', '/org/bluez/example/app0/service0/char1', '/org/bluez/example/app0/service0/char2', '/org/bluez/example/app0/service0/char3', '/org/bluez/example/app0/service0/char4', '/org/bluez/example/app0/service0/char5']>"
           "    }"
@@ -117,7 +118,7 @@ static void app_method_call (GDBusConnection       *connection,
           "  objectpath '/org/bluez/example/app0/service0/char0': {"
           "    'org.bluez.GattCharacteristic1': { "
           "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-          "      'UUID': <'00002a4a-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2a4a'>,"
           "      'Flags': <['read']>,"
           "      'Descriptors': <@ao []>"
           "    }"
@@ -126,7 +127,7 @@ static void app_method_call (GDBusConnection       *connection,
           "  objectpath '/org/bluez/example/app0/service0/char1': {"
           "    'org.bluez.GattCharacteristic1': { "
           "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-          "      'UUID': <'00002a4c-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2a4c'>,"
           "      'Flags': <['write-without-response']>,"
           "      'Descriptors': <@ao []>"
           "    }"
@@ -135,25 +136,25 @@ static void app_method_call (GDBusConnection       *connection,
           "  objectpath '/org/bluez/example/app0/service0/char2': {"
           "    'org.bluez.GattCharacteristic1': { "
           "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-          "      'UUID': <'00002a4e-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2a4e'>,"
           "      'Flags': <['read','write-without-response']>,"
           "      'Descriptors': <@ao []>"
           "    }"
           "  }, "
           // Boot Mouse Input Report
-          "  objectpath '/org/bluez/example/app0/service0/char3': {"
-          "    'org.bluez.GattCharacteristic1': { "
-          "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-          "      'UUID': <'00002a33-0000-1000-8000-00805f9b34fb'>,"
-          "      'Flags': <['read','notify']>,"
-          "      'Descriptors': <@ao []>"
-          "    }"
-          "  }, "
+          // "  objectpath '/org/bluez/example/app0/service0/char3': {"
+          // "    'org.bluez.GattCharacteristic1': { "
+          // "      'Service': <@o '/org/bluez/example/app0/service0'>,"
+          // "      'UUID': <'2a33'>,"
+          // "      'Flags': <['read','notify']>,"
+          // "      'Descriptors': <@ao []>"
+          // "    }"
+          // "  }, "
           // Report Map
           "  objectpath '/org/bluez/example/app0/service0/char4': {"
           "    'org.bluez.GattCharacteristic1': { "
           "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-          "      'UUID': <'00002a4b-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2a4b'>,"
           "      'Flags': <['read']>,"
           "      'Descriptors': <@ao []>"
           "    }"
@@ -162,7 +163,7 @@ static void app_method_call (GDBusConnection       *connection,
           "  objectpath '/org/bluez/example/app0/service0/char5': {"
           "    'org.bluez.GattCharacteristic1': { "
           "      'Service': <@o '/org/bluez/example/app0/service0'>,"
-          "      'UUID': <'00002a4d-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2a4d'>,"
           "      'Flags': <['read', 'write', 'notify']>,"
           "      'Descriptors': <@ao []>"
           "    }"
@@ -170,7 +171,7 @@ static void app_method_call (GDBusConnection       *connection,
           "  objectpath '/org/bluez/example/app0/service0/char5/descriptor0': {"
           "    'org.bluez.GattDescriptor1': { "
           "      'Characteristic': <@o '/org/bluez/example/app0/service0/char5'>,"
-          "      'UUID': <'00002908-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2908'>,"
           "      'Flags': <['read']>,"
           "      'Descriptors': <@ao []>"
           "    }"
@@ -178,7 +179,7 @@ static void app_method_call (GDBusConnection       *connection,
           // Battery Service
           "  objectpath '/org/bluez/example/app0/service1': {"
           "    'org.bluez.GattService1': { "
-          "      'UUID': <'0000180f-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'180f'>,"
           "      'Primary': <true>,"
           "      'Characteristics': <@ao ['/org/bluez/example/app0/service1/char0']>"
           "    }"
@@ -187,43 +188,8 @@ static void app_method_call (GDBusConnection       *connection,
           "  objectpath '/org/bluez/example/app0/service1/char0': {"
           "    'org.bluez.GattCharacteristic1': { "
           "      'Service': <@o '/org/bluez/example/app0/service1'>,"
-          "      'UUID': <'00002a19-0000-1000-8000-00805f9b34fb'>,"
+          "      'UUID': <'2a19'>,"
           "      'Flags': <['read', 'notify']>,"
-          "      'Descriptors': <@ao []>"
-          "    }"
-          "  },"
-          // Device Info Service
-          "  objectpath '/org/bluez/example/app0/service2': {"
-          "    'org.bluez.GattService1': { "
-          "      'UUID': <'0000180a-0000-1000-8000-00805f9b34fb'>,"
-          "      'Primary': <true>,"
-          "      'Characteristics': <@ao ['/org/bluez/example/app0/service2/char0', '/org/bluez/example/app0/service2/char1', '/org/bluez/example/app0/service2/char2']>"
-          "    }"
-          "  },"
-          // Vendor
-          "  objectpath '/org/bluez/example/app0/service2/char0': {"
-          "    'org.bluez.GattCharacteristic1': { "
-          "      'Service': <@o '/org/bluez/example/app0/service2'>,"
-          "      'UUID': <'00002a29-0000-1000-8000-00805f9b34fb'>,"
-          "      'Flags': <['read']>,"
-          "      'Descriptors': <@ao []>"
-          "    }"
-          "  },"
-          // Product
-          "  objectpath '/org/bluez/example/app0/service2/char1': {"
-          "    'org.bluez.GattCharacteristic1': { "
-          "      'Service': <@o '/org/bluez/example/app0/service2'>,"
-          "      'UUID': <'00002a24-0000-1000-8000-00805f9b34fb'>,"
-          "      'Flags': <['read']>,"
-          "      'Descriptors': <@ao []>"
-          "    }"
-          "  },"
-          // Version
-          "  objectpath '/org/bluez/example/app0/service2/char2': {"
-          "    'org.bluez.GattCharacteristic1': { "
-          "      'Service': <@o '/org/bluez/example/app0/service2'>,"
-          "      'UUID': <'00002a28-0000-1000-8000-00805f9b34fb'>,"
-          "      'Flags': <['read']>,"
           "      'Descriptors': <@ao []>"
           "    }"
           "  }"
@@ -415,7 +381,7 @@ static void hid_method_call (GDBusConnection       *connection,
     //   0xC0,        //  END_COLLECTION
     //   0xC0         // END_COLLECTION
     // };
-
+    //
     if(g_str_equal(method_name, "ReadValue")) {
 
       int map_len = 0;
@@ -437,7 +403,7 @@ static void hid_method_call (GDBusConnection       *connection,
   } else if(g_str_equal(object_path, APP_OBJECT_PATH "/service0/char5")) {
     // Report
     if(g_str_equal(method_name, "ReadValue")) {
-      GVariant *variant = g_variant_new_parsed("(@ay [ 0x01 ], )");
+      GVariant *variant = g_variant_new_parsed("(@ay [ 0x00, 0x00, 0x00, 0x00 ], )");
       g_dbus_method_invocation_return_value(invocation, variant); 
     } else if(g_str_equal(method_name, "WriteValue")) {
       g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
@@ -465,18 +431,16 @@ GDBusInterfaceVTable hid_interface_table = {
 
 
 
+guint16 battery_level = 100;
 gboolean is_notify_battery = FALSE;
-
 gboolean battery_notify_func(gpointer user_data) {
 
+  static int count = 0;
   GRand *rand = g_rand_new_with_seed(g_get_real_time());
-  guint16 val = g_rand_int_range(rand, 0, 100);
+  battery_level = g_rand_int_range(rand, 10, 100);
 
-  guchar data[4] = { 0 };
 
-  data[0] = val;
-
-  GVariant *variant = g_variant_new_parsed("('org.bluez.GattCharacteristic1', {'Value': <@ay [%y]>}, @as [])", data[0]);
+  GVariant *variant = g_variant_new_parsed("('org.bluez.GattCharacteristic1', {'Value': <@ay [%y]>}, @as [])", battery_level);
   g_print("---- %s variant: %s\n", __FUNCTION__,  g_variant_print(variant, TRUE));
 
   GError *error = NULL;
@@ -505,6 +469,8 @@ static void battery_method_call (GDBusConnection       *connection,
                                 GDBusMethodInvocation *invocation,
                                 gpointer               user_data) {
 
+  g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
+
   if(g_str_equal(object_path, APP_OBJECT_PATH "/service1")) {
 
     gchar value_string[] = 
@@ -521,7 +487,7 @@ static void battery_method_call (GDBusConnection       *connection,
   } else if(g_str_equal(object_path, APP_OBJECT_PATH "/service1/char0")) {
     if(g_str_equal(method_name, "ReadValue")) {
 
-      GVariant *variant = g_variant_new_parsed("(@ay [ %y ], )", 99);
+      GVariant *variant = g_variant_new_parsed("(@ay [ %y ], )", battery_level);
       g_dbus_method_invocation_return_value(invocation, variant);
     } else if(g_str_equal(method_name, "StartNotify")) {
       is_notify_battery = TRUE;
@@ -538,91 +504,6 @@ GDBusInterfaceVTable battery_interface_table = {
   NULL,
   {0}
 };
-
-static void dev_info_method_call (GDBusConnection       *connection,
-                                const gchar           *sender,
-                                const gchar           *object_path,
-                                const gchar           *interface_name,
-                                const gchar           *method_name,
-                                GVariant              *parameters,
-                                GDBusMethodInvocation *invocation,
-                                gpointer               user_data) {
-
-  g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
-  if(g_str_equal(object_path, APP_OBJECT_PATH "/service2")) {
-
-  } else if(g_str_equal(object_path, APP_OBJECT_PATH "/service2/char0")) {
-    if(g_str_equal(method_name, "ReadValue")) {
-      const guchar *ptr = NULL;
-      const guchar vender[] = "HodgeCode";
-
-      GVariantBuilder vendor_builder;
-      g_variant_builder_init(&vendor_builder, G_VARIANT_TYPE_ARRAY);
-
-      ptr = vender;
-      while(*ptr != '\0') {
-        g_variant_builder_add(&vendor_builder, "y", *ptr);
-        ptr++;
-      }
-      GVariant* array_variant = g_variant_builder_end(&vendor_builder);
-      g_print("array_variant: %s\n", g_variant_print(array_variant, TRUE));
-
-      GVariant *variant = g_variant_new("(@ay)", array_variant);
-      g_print("variant: %s\n", g_variant_print(array_variant, TRUE));
-      g_dbus_method_invocation_return_value(invocation, variant);
-    }
-  } else if(g_str_equal(object_path, APP_OBJECT_PATH "/service2/char1")) {
-    if(g_str_equal(method_name, "ReadValue")) {
-      const guchar *ptr = NULL;
-      const guchar vender[] = "smartRemotes";
-
-      GVariantBuilder product_builder;
-      g_variant_builder_init(&product_builder, G_VARIANT_TYPE_ARRAY);
-
-      ptr = vender;
-      while(*ptr != '\0') {
-        g_variant_builder_add(&product_builder, "y", *ptr);
-        ptr++;
-      }
-      GVariant* array_variant = g_variant_builder_end(&product_builder);
-      g_print("array_variant: %s\n", g_variant_print(array_variant, TRUE));
-
-      GVariant *variant = g_variant_new("(@ay)", array_variant);
-      g_print("variant: %s\n", g_variant_print(array_variant, TRUE));
-
-      g_dbus_method_invocation_return_value(invocation, variant);
-    }
-  } else if(g_str_equal(object_path, APP_OBJECT_PATH "/service2/char2")) {
-    if(g_str_equal(method_name, "ReadValue")) {
-      const guchar *ptr = NULL;
-      const guchar vender[] = "version 1.0.0";
-
-      GVariantBuilder product_builder;
-      g_variant_builder_init(&product_builder, G_VARIANT_TYPE_ARRAY);
-
-      ptr = vender;
-      while(*ptr != '\0') {
-        g_variant_builder_add(&product_builder, "y", *ptr);
-        ptr++;
-      }
-      GVariant* array_variant = g_variant_builder_end(&product_builder);
-      g_print("array_variant: %s\n", g_variant_print(array_variant, TRUE));
-
-      GVariant *variant = g_variant_new("(@ay)", array_variant);
-      g_print("variant: %s\n", g_variant_print(array_variant, TRUE));
-
-      g_dbus_method_invocation_return_value(invocation, variant);
-    }
-  }
-}
-
-GDBusInterfaceVTable dev_info_interface_table = {
-  dev_info_method_call,
-  NULL,
-  NULL,
-  {0}
-};
-
 
 
 static void on_register_application (GObject *source_object,
@@ -907,60 +788,6 @@ int main(int argc, char* argv[]) {
     raise(SIGINT);
   }
 
-
-  guint service_2_register_id = g_dbus_connection_register_object(connection, 
-                                    APP_OBJECT_PATH "/service2",
-                                    service_introspection_data->interfaces[0],
-                                    &dev_info_interface_table,
-                                    NULL, 
-                                    NULL,
-                                    &error);
-  if(error != NULL) {
-    fprintf(stderr, "Errorr registering object: %s\n", error->message);
-    g_error_free(error);
-    raise(SIGINT);
-  }
-
-  guint service_2_char_0_register_id = g_dbus_connection_register_object(connection, 
-                                    APP_OBJECT_PATH "/service2/char0",
-                                    characteristic_introspection_data->interfaces[0],
-                                    &dev_info_interface_table,
-                                    NULL, 
-                                    NULL,
-                                    &error);
-  if(error != NULL) {
-    fprintf(stderr, "Errorr registering object: %s\n", error->message);
-    g_error_free(error);
-    raise(SIGINT);
-  }
-
-  guint service_2_char_1_register_id = g_dbus_connection_register_object(connection, 
-                                    APP_OBJECT_PATH "/service2/char1",
-                                    characteristic_introspection_data->interfaces[0],
-                                    &dev_info_interface_table,
-                                    NULL, 
-                                    NULL,
-                                    &error);
-  if(error != NULL) {
-    fprintf(stderr, "Errorr registering object: %s\n", error->message);
-    g_error_free(error);
-    raise(SIGINT);
-  }
-
-  guint service_2_char_2_register_id = g_dbus_connection_register_object(connection, 
-                                    APP_OBJECT_PATH "/service2/char2",
-                                    characteristic_introspection_data->interfaces[0],
-                                    &dev_info_interface_table,
-                                    NULL, 
-                                    NULL,
-                                    &error);
-  if(error != NULL) {
-    fprintf(stderr, "Errorr registering object: %s\n", error->message);
-    g_error_free(error);
-    raise(SIGINT);
-  }
-
-
   printf("-------- Get proxy.\n");
   gatt_manager_proxy = g_dbus_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM, 
                                                      G_DBUS_PROXY_FLAGS_NONE,
@@ -994,10 +821,6 @@ int main(int argc, char* argv[]) {
   g_dbus_connection_unregister_object(connection, service_1_register_id);
   g_dbus_connection_unregister_object(connection, service_1_char_0_register_id);
 
-  g_dbus_connection_unregister_object(connection, service_2_register_id);
-  g_dbus_connection_unregister_object(connection, service_2_char_0_register_id);
-  g_dbus_connection_unregister_object(connection, service_2_char_1_register_id);
-  g_dbus_connection_unregister_object(connection, service_2_char_2_register_id);
   return 0;
 }
 

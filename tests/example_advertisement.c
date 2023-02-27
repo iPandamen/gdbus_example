@@ -44,8 +44,10 @@ static void handle_method_call (GDBusConnection       *connection,
       gchar string[] = 
         "({"
         "  'Type': <'peripheral'>, "
-        "  'ServiceUUIDs': <['180D', '180F']>, "
-        "  'LocalName': <'TestAdvertisement'>, "
+        "  'ServiceUUIDs': <['180A', '1812']>, "
+        "  'LocalName': <'TestMouse'>, "
+        // "  'Appearance': <0x03C0>,"
+        "  'Discoverable': <true>, "
         "  'Includes': <['tx-power']>"
         "},)";
       variant = g_variant_new_parsed(string);
@@ -68,13 +70,6 @@ GVariant *handle_get_property (GDBusConnection       *connection,
 
   GVariant *ret = NULL;
 
-  if(g_strcmp0(object_path, "/org/bluez/BatteryService/service000") == 0) {
-    if(g_strcmp0(property_name, "UUID") == 0) {
-      ret = g_variant_new_string("0000180d-0000-1000-8000-00805f9b34fb");
-    } else if(g_strcmp0(property_name, "Primary") == 0) {
-      ret = g_variant_new_boolean(TRUE);
-    }
-  }
   return ret;
 }
 
@@ -204,7 +199,6 @@ int main(int argc, char *argv[]) {
                                                              NULL,
                                                              NULL,
                                                              &error);
-
   if(error != NULL) {
     g_print("Error registering object: %s\n", error->message);
     g_error_free(error);
@@ -226,10 +220,12 @@ int main(int argc, char *argv[]) {
   }
 
   register_advertisement(le_ad_proxy, AD_OBJECT_PATH );
+
   main_loop = g_main_loop_new(NULL, FALSE);
   g_main_loop_run(main_loop);
 
   unregister_advertisement(le_ad_proxy, AD_OBJECT_PATH);
+
   g_dbus_connection_unregister_object(connection, registeration_id);
   g_object_unref(connection);
 
