@@ -1,6 +1,11 @@
 
+#include <stdint.h>
 #include <stdio.h>
 #include <signal.h>
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <linux/input.h>
 
 #include <glib.h>
 #include <gio/gio.h>
@@ -200,12 +205,12 @@ gboolean report_notify_func(gpointer user_data) {
   g_print("---- %s variant: %s\n", __FUNCTION__,  g_variant_print(variant, TRUE));
 
   GError *error = NULL;
-  g_dbus_connection_emit_signal(connection, 
-                                NULL, 
-                                APP_OBJECT_PATH "/service0/char5", 
+  g_dbus_connection_emit_signal(connection,
+                                NULL,
+                                APP_OBJECT_PATH "/service0/char5",
                                 "org.freedesktop.DBus.Properties",
-                                "PropertiesChanged", 
-                                variant, 
+                                "PropertiesChanged",
+                                variant,
                                 &error);
   if(error != NULL) {
     fprintf(stderr, "Error emitting PropertiesChanged: %s\n", error->message);
@@ -335,7 +340,7 @@ static void hid_method_call (GDBusConnection       *connection,
       g_dbus_method_invocation_return_value(invocation, variant);
     } else if(g_str_equal(method_name, "StartNotify")) {
       is_notify_report = TRUE;
-      g_timeout_add_seconds(1, report_notify_func, NULL);
+      // g_timeout_add_seconds(1, report_notify_func, NULL);
     } else if(g_str_equal(method_name, "StopNotify")) {
       is_notify_report = FALSE;
     }
@@ -426,6 +431,114 @@ void unregister_application (GDBusProxy* gatt_manageer_proxy, gchar *application
                     on_unregister_application,
                     NULL);
 }
+
+
+void update(uint8_t btn,uint8_t rel_x, uint8_t rel_y, uint8_t rel_wheel) {
+
+  if(!is_notify_report) {
+    return ;
+  }
+
+  GVariant *variant = g_variant_new_parsed("('org.bluez.GattCharacteristic1', {'Value': <@ay [%y, %y, %y, %y]>}, @as [])", btn, rel_x, rel_y, rel_wheel);
+  // g_print("---- %s variant: %s\n", __FUNCTION__,  g_variant_print(variant, TRUE));
+
+  GError *error = NULL;
+  g_dbus_connection_emit_signal(connection, 
+                                NULL, 
+                                APP_OBJECT_PATH "/service0/char5", 
+                                "org.freedesktop.DBus.Properties",
+                                "PropertiesChanged", 
+                                variant, 
+                                &error);
+  if(error != NULL) {
+    fprintf(stderr, "Error emitting PropertiesChanged: %s\n", error->message);
+    g_error_free(error);
+  }
+}
+
+void *test(void* args) {
+
+  int fd = open("/dev/input/event1", O_RDONLY);
+  if(fd < 0 ) {
+    printf("Open file failed!\n");
+    exit(1);
+  }
+
+  fd_set rd_set;
+  uint8_t rel_x = 0, rel_y = 0, rel_wheel = 0, btn = 0;
+  do {
+    struct timeval tv =  {
+      .tv_sec = 1,
+      .tv_usec = 0
+    };
+
+    FD_ZERO(&rd_set);
+    FD_SET(fd, &rd_set);
+
+    int rc = select(fd+1, &rd_set, NULL, NULL, &tv);
+    if(rc < 0) {
+      printf("Select failed\n");
+    } else if(rc == 0) {
+      printf("timeout...\n");
+    } else {
+
+      if(FD_ISSET(fd, &rd_set)) {
+        struct input_event ev;
+        rc = read(fd, &ev, sizeof(ev));
+        if(rc < 0) {
+          printf("read failed!\n");
+        } else {
+          switch(ev.type) {
+            case EV_REL:
+              if(ev.code == REL_X)  {
+                rel_x = ev.value;
+              } else if(ev.code == REL_Y) {
+                rel_y = ev.value;
+              } else if(ev.code == REL_WHEEL) {
+                rel_wheel = ev.value;
+              }
+            case EV_KEY:
+              if(ev.code == BTN_LEFT) {
+                if(ev.value) {
+                  btn |= 0x01;
+                } else {
+                  btn &= ~0x01;
+                }
+              } else if(ev.code == BTN_RIGHT) {
+                if(ev.value) {
+                  btn |= 0x02;
+                } else {
+                  btn &= ~0x02;
+                }
+              } else if(ev.code == BTN_MIDDLE) {
+                if(ev.value) {
+                  btn |= 0x04;
+                } else {
+                  btn &= ~0x04;
+                }
+              }
+              // printf("ev.value: %d\n", ev.value);
+              // printf("btn: %#x, rel_x: %d, rel_y: %d, rel_wheel: %d\n", btn, rel_x, rel_y, rel_wheel);
+              break;
+            case EV_SYN:
+              // printf("btn: %#x, rel_x: %d, rel_y: %d, rel_wheel: %d\n", btn, rel_x, rel_y, rel_wheel);
+              update(btn, rel_x, rel_y, rel_wheel);
+              rel_x = 0;
+              rel_y = 0;
+              rel_wheel = 0;
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    }
+  }while(1);
+  close(fd);
+  return NULL;
+}
+
+
 
 
 void on_signal(int signal) {
@@ -625,6 +738,7 @@ int main(int argc, char* argv[]) {
     raise(SIGINT);
   }
 
+  g_thread_new("Mouse", test, NULL);
 
   register_application(gatt_manager_proxy, APP_OBJECT_PATH);
   g_main_loop_run(main_loop);

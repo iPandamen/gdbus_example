@@ -55,7 +55,7 @@ static void ad_method_call (GDBusConnection       *connection,
           "  'Type': <'peripheral'>, "
           "  'ServiceUUIDs': <['1812']>, "
           "  'LocalName': <'TestMouse'>, "
-          "  'Appearance': <@q 0x03C0>,"
+          "  'Appearance': <@q 0x03C2>,"
           "  'Discoverable': <true>, "
           "  'Includes': <['tx-power']>"
           "},)";
