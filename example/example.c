@@ -1,10 +1,11 @@
 
+#include <stdio.h>
+
 #include <glib.h>
 #include <gio/gio.h>
 
 GMainLoop *main_loop = NULL;
 GDBusConnection *connection = NULL;
-
 
 guint interface_added_subscribe_id = 0;
 guint interface_removed_subscribe_id = 0;
@@ -52,10 +53,10 @@ static void ad_method_call (GDBusConnection       *connection,
         gchar string[] = 
           "({"
           "  'Type': <'peripheral'>, "
-          // "  'ServiceUUIDs': <['180A', '1812']>, "
+          "  'ServiceUUIDs': <['1812']>, "
           "  'LocalName': <'TestMouse'>, "
-          // "  'Appearance': <0x03C0>,"
-          // "  'Discoverable': <true>, "
+          "  'Appearance': <@q 0x03C0>,"
+          "  'Discoverable': <true>, "
           "  'Includes': <['tx-power']>"
           "},)";
         variant = g_variant_new_parsed(string);
@@ -66,7 +67,7 @@ static void ad_method_call (GDBusConnection       *connection,
   }
 }
 
-GDBusInterfaceVTable ad_interface_table = {
+static GDBusInterfaceVTable ad_interface_table = {
   ad_method_call,
   NULL,
   NULL,
@@ -74,6 +75,84 @@ GDBusInterfaceVTable ad_interface_table = {
 };
 
 
+#define AGENT_OBJECT_PATH "/org/bluez/app/agent0"
+
+guint agent_register_id = 0;
+GDBusProxy *agent_manager_proxy = NULL;
+
+GDBusNodeInfo *agent_node_info;
+gchar *agent_xml =
+  "<node>"
+  "  <interface name='org.bluez.Agent1'>"
+  "    <method name='Release'>"
+  "    </method>"
+  "    <method name='RequestPinCode'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "      <arg name='pincode' direction='out' type='s' />"
+  "    </method>"
+  "    <method name='DisplayPinCode'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "      <arg name='pincode' direction='in' type='s' />"
+  "    </method>"
+  "    <method name='RequestPasskey'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "      <arg name='passkey' direction='out' type='u' />"
+  "    </method>"
+  "    <method name='DisplayPasskey'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "      <arg name='passkey' direction='in' type='u' />"
+  "      <arg name='entered' direction='in' type='q' />"
+  "    </method>"
+  "    <method name='RequestConfirmation'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "      <arg name='passkey' direction='in' type='u' />"
+  "    </method>"
+  "    <method name='RequestAuthorization'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "    </method>"
+  "    <method name='AuthorizeService'>"
+  "      <arg name='device' direction='in' type='o' />"
+  "      <arg name='uuid' direction='in' type='s' />"
+  "    </method>"
+  "    <method name='Cancel'>"
+  "    </method>"
+  "  </interface>"
+  "</node>";
+
+
+static void agent_method_call (GDBusConnection       *connection,
+                                const gchar           *sender,
+                                const gchar           *object_path,
+                                const gchar           *interface_name,
+                                const gchar           *method_name,
+                                GVariant              *parameters,
+                                GDBusMethodInvocation *invocation,
+                                gpointer               user_data) {
+
+  g_print("sender: %s, object_path: %s, interface_name: %s, method_name: %s\n", sender, object_path, interface_name, method_name);
+  g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
+
+  if(g_str_equal(object_path, AGENT_OBJECT_PATH)) {
+    if(g_str_equal(interface_name, "org.bluez.Agent1")) {
+
+      GVariant *variant = NULL;
+      variant = g_variant_new("()");
+      g_print("variant: %s\n", g_variant_print(variant, TRUE));
+      g_dbus_method_invocation_return_value(invocation, variant);
+
+      if(g_str_equal(method_name, "RequestConfirmation")) {
+
+      }
+    }
+  }
+}
+
+static GDBusInterfaceVTable agent_interface_table = {
+  agent_method_call,
+  NULL,
+  NULL,
+  {0}
+};
 
 
 
@@ -141,6 +220,69 @@ void stop_advertisement(void) {
                     NULL);
 }
 
+static void on_register_agent_ready (GObject *source_object,
+                       GAsyncResult *res,
+                       gpointer user_data) {
+  GError *error = NULL;
+  GDBusProxy *proxy = (GDBusProxy *)source_object;
+  GVariant* result = g_dbus_proxy_call_finish(proxy, res, &error);
+  if(error != NULL) {
+    g_print("Error register agent: %s\n", error->message);
+    g_error_free(error);
+    raise(SIGINT);
+    return ;
+  }
+
+  g_print("result: %s\n", g_variant_print(result, TRUE));
+
+}
+
+void register_agent(void) {
+
+  g_print("---------------- Register Agent!\n");
+  GVariant *parameters = g_variant_new("(os)", AGENT_OBJECT_PATH, "KeyboardDisplay");
+  g_dbus_proxy_call(agent_manager_proxy,
+                    "RegisterAgent",
+                    parameters,
+                    G_DBUS_CALL_FLAGS_NONE,
+                    -1,
+                    NULL,
+                    on_register_agent_ready,
+                    NULL);
+
+}
+
+static void on_unregister_agent_ready (GObject *source_object,
+                       GAsyncResult *res,
+                       gpointer user_data) {
+
+  GError *error = NULL;
+  GDBusProxy *proxy = (GDBusProxy *)source_object;
+  GVariant* result = g_dbus_proxy_call_finish(proxy, res, &error);
+  if(error != NULL) {
+    g_print("Error unregister agent: %s\n", error->message);
+    g_error_free(error);
+    raise(SIGINT);
+    return ;
+  }
+
+  g_print("result: %s\n", g_variant_print(result, TRUE));
+
+}
+
+void unregister_agent(void) {
+
+  g_print("---------------- Unregister Agent!\n");
+  GVariant *parameters = g_variant_new("(o)", AGENT_OBJECT_PATH);
+  g_dbus_proxy_call(agent_manager_proxy,
+                    "UnregisterAgent",
+                    parameters,
+                    G_DBUS_CALL_FLAGS_NONE,
+                    -1,
+                    NULL,
+                    on_register_agent_ready,
+                    NULL);
+}
 
 
 void on_get_ad_manager_proxy_ready (GObject *source_object,
@@ -183,6 +325,46 @@ void on_get_ad_manager_proxy_ready (GObject *source_object,
   start_advertisement();
 }
 
+void on_get_agent_manager_proxy_ready (GObject *source_object,
+                       GAsyncResult *res,
+                       gpointer user_data) {
+  GError *error = NULL;
+
+  agent_manager_proxy = g_dbus_proxy_new_finish(res, &error);
+  if(error != NULL) {
+    g_print("Error getting agent_manager_proxy: %s\n", error->message);
+    g_error_free(error);
+    raise(SIGINT);
+    return ;
+  }
+
+  g_print("---------------- Get agent object node info!\n");
+  agent_node_info = g_dbus_node_info_new_for_xml(agent_xml, &error);
+  if(error != NULL) {
+    g_print("Error get advertisement object node info: %s\n", error->message);
+    g_error_free(error);
+    raise(SIGINT);
+    return ;
+  }
+
+  g_print("---------------- Register agent object!\n");
+  agent_register_id = g_dbus_connection_register_object(connection,
+                                    AGENT_OBJECT_PATH,
+                                    agent_node_info->interfaces[0],
+                                    &agent_interface_table,
+                                    NULL, 
+                                    NULL, 
+                                    &error);
+  if(error != NULL) {
+    g_print("Error registering advertisement object: %s\n", error->message);
+    g_error_free(error);
+    raise(SIGINT);
+    return ;
+  }
+
+  register_agent();
+}
+
 void on_bluez_signal (GDBusConnection  *connection,
                 const gchar      *sender_name,
                 const gchar      *object_path,
@@ -191,9 +373,9 @@ void on_bluez_signal (GDBusConnection  *connection,
                 GVariant         *parameters,
                 gpointer          user_data) {
 
-  g_print("\n");
-  g_print("sender_name: %s, object_path: %s, interface_name: %s, signal_name: %s\n", sender_name, object_path, interface_name, signal_name);
-  g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
+  // g_print("\n");
+  // g_print("sender_name: %s, object_path: %s, interface_name: %s, signal_name: %s\n", sender_name, object_path, interface_name, signal_name);
+  // g_print("parameters: %s\n", g_variant_print(parameters, TRUE));
 
   if(g_str_equal(interface_name, "org.freedesktop.DBus.ObjectManager")) {
     if(g_str_equal(signal_name, "InterfacesAdded")) {
@@ -274,6 +456,18 @@ void on_bus_get_ready (GObject *source_object,
                    on_get_ad_manager_proxy_ready,
                    NULL);
 
+
+  g_print("---------------- Get agent_manager_proxy !\n");
+  g_dbus_proxy_new(connection,
+                   G_DBUS_PROXY_FLAGS_NONE,
+                   NULL,
+                   "org.bluez",
+                   "/org/bluez",
+                   "org.bluez.AgentManager1",
+                   NULL,
+                   on_get_agent_manager_proxy_ready,
+                   NULL);
+
 }
 
 void on_system_signal(int signal) {
@@ -308,6 +502,9 @@ int main(int argc, char *argv[]) {
 
   stop_advertisement();
   g_dbus_connection_unregister_object(connection, ad_register_id);
+
+  unregister_agent();
+  g_dbus_connection_unregister_object(connection, agent_register_id);
 
   return 0;
 }
